@@ -1,2 +1,4 @@
 diner: diner.cpp
-	g++ -pg -o diner diner.cpp -lpthread
+	g++ -o diner diner.cpp -lpthread -fno-stack-protector
+
+

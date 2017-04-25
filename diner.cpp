@@ -39,15 +39,8 @@ void safe_print(const std::string& input, int i, int j)
 void *customer(void *x)
 {
     int n = *((int *) x);
-
     safe_print("I am customer # ", n,999);
-
-
-    while (giveing_menu[n] == 0) 
-    {
-        //sleep(1);
-    }
-    
+    while (giveing_menu[n] == 5) {}
     sem_wait(&tables);
     safe_print("this person sat at a table ", n,999);
     safe_print("I am ready to order", n,999);
@@ -60,18 +53,14 @@ void *customer(void *x)
     }
 
     // sink up the guest and the waiter
-    if (n == 1){ sem_post(&waiter1); }
-    else if(n == 0){ sem_post(&waiter2); }
-
+    if (w_id == 1){ sem_post(&waiter1); }
+    else if(w_id == 0){ sem_post(&waiter2); }
 
     sem_wait(&printing);
     cout  << "####" << n << " "  << w_id << " WE ARE PARED UP" << endl;
 	sem_post(&printing);
 
-
-    safe_print("I am paired with this waiter ",n, w_id);
     safe_print("I order food: ", n,w_id);
-    
 
     safe_print(" I eat ",n,w_id);
 
@@ -105,22 +94,20 @@ void *waiter(void *x)
     int customer_id;
     safe_print("I am waiter # ", 999,n);
 
-    while (order.size() > 0)
+    while (order.size() > 1)
     {
 
         // give a menu to customer 
         sem_wait(&get_customer);
-        safe_print("this person is going to be next ", customer_id,n);
-
-        order.pop();
-        safe_print("This many people are still waiting", order.size(), order.size());
         customer_id = order.front();
+        order.pop();
+        safe_print("this person is going to be next ", customer_id,n);
+        safe_print("This many people are still waiting", order.size(), order.size());
         safe_print("I am going to give a menu to this customer ", customer_id,n);
         sem_post(&get_customer);
 
         // set the giving_id to your id
         giveing_menu[customer_id] = n;
-
         // sink up the guest and the waiter
         if (n == 1){ sem_wait(&waiter1); }
         else{ sem_wait(&waiter2); }
@@ -161,11 +148,7 @@ int main(int argc, char *argv[])
     sem_init(&waiter1_busy, 0, 0);
     sem_init(&waiter2_busy, 0, 0);
 
-    
-
-
-    int rc,w,i;
-
+    int rc,w,i,j;
     // Create guest threads
     pthread_t threads[9];
     for (i=0; i<10; ++i)
@@ -177,19 +160,18 @@ int main(int argc, char *argv[])
 
     // create waiters
     pthread_t wthreads[2];
-    for (i=0; i<2; ++i)
+    for (j=0; j<2; ++j)
     {
-        w = pthread_create(&wthreads[i], NULL, waiter, new int(i));
+        w = pthread_create(&wthreads[j], NULL, waiter, new int(j));
 
     }
 
-    sleep(10);
     //clean up
-    for (i=0; i<9; ++i) {
-        rc = pthread_join(threads[i], NULL);
-    }
-    for (i=0; i<2; ++i) {
-        w = pthread_join(wthreads[i], NULL);
+    //for (i=0; i<9; ++i) {
+    //    rc = pthread_join(threads[i], NULL);
+    //}
+    for (j=0; j<2; ++j) {
+        w = pthread_join(wthreads[j], NULL);
     }   
     cout << "finishing" << endl;
     return 0;
